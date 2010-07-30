@@ -1,0 +1,79 @@
+#!/bin/bash -e
+
+# backup script based on Git
+
+# configuration
+
+DEST=/var/local/backup/$(hostname)
+GITLIST=$DEST/../git-repos.txt
+GITUSER="git-backup <me@example.com>"
+
+# helper functions
+
+gitcommit() {
+    # gitcommit <base>
+    # create a new git commit in <base> if necessary
+    (   # open a subshell so we can cd somewhere else
+	cd "$1" || return 1
+	if [ -d "$1/.git" ]; then
+		# the repo exists; check if anything has changed
+		[ -z "$(git ls-files -t --exclude-standard -m -o -d)" ] && return
+	else
+		# create the new repo
+		git init
+	fi
+	for i in 0 1 2 3 4 5 6 7 8 9; do
+		git add --all && git commit --quiet --author "$GITUSER" -m"$(date -Im)" && break
+		echo "retrying..."
+	done
+    )
+}
+
+folder() {
+    # folder <base> <output> <dir>...
+    # copy <dir>s relative to <base> into $DEST/dir/$output
+    local root=$1
+    local output=$2
+    shift 2
+    dir=$DEST/dir/$output
+    mkdir -p $dir
+    ( cd $root && cp -a $* $dir/ )
+}
+
+mysql() {
+    # backup a mysql database
+    mysqldump -u backup --force --skip-extended-insert $1 |
+    sed -e '$d' >$DEST/db/$1.mysql
+    # remove the last line: "Dump completed on ..."
+}
+
+sqlite() {
+    # backup a sqlite file
+    echo .dump | sqlite3 $1 >$DEST/db/$2.sqlite
+}
+
+# end of helper functions
+
+# create required folders
+mkdir -p $DEST/{dir,db}
+
+# Debian package list
+dpkg --get-selections | grep -v 'deinstall$' >/etc/$(hostname)-dpkg--get-selections.txt
+
+# MySQL databases
+# mysql <MySQL DB name>
+mysql mysql
+mysql dovecot
+
+# sqlite databases
+# sqlite <SQLite file name> <dump file basename>
+sqlite /home/me/projects/myproject1/datastore.db myproject1-datastore
+
+# folders
+# folder <base dir> <output dir name> <subdirs of base to copy>
+folder /usr/local/lib/python2.5/site-packages python2.5-libs mylib1 mylib2
+
+# commit all git repos in $GITLIST
+sed -e '/^#/d; /^$/d' <$GITLIST | while read -r path repo; do
+	gitcommit $path
+done

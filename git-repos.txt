@@ -1,0 +1,11 @@
+# list of git repos that are committed each night
+
+/etc					etc.git
+/usr/local				usr_local.git
+/var/local/backup			var_local_backup.git
+
+/home/hosting/domain1.com	        hosting_domain1.git
+/home/hosting/domain2.com		hosting_domain2.git
+
+/home/vmail/domain1.com                 mail_domain1.git
+/home/vmail/domain2.com                 mail_domain2.git
