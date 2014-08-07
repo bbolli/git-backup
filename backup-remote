@@ -20,7 +20,7 @@ cd $DEST
 sed -e '/^#/d; /^$/d' <$GITLIST | while read -r path repo; do
 	if [ ! -d $repo ]; then
 		git init --bare $repo
-		GIT_DIR=$repo git remote add --mirror origin ssh://$SERVER$path
+		GIT_DIR=$repo git remote add --mirror=fetch origin ssh://$SERVER$path
 	fi
 	GIT_DIR=$repo git fetch --quiet origin
 done
