@@ -22,5 +22,5 @@ sed -e '/^#/d; /^$/d' <$GITLIST | while read -r path repo; do
 		git init --bare $repo
 		GIT_DIR=$repo git remote add --mirror=fetch origin ssh://$SERVER$path
 	fi
-	GIT_DIR=$repo git fetch --quiet origin
+	GIT_DIR=$repo git fetch --quiet origin || echo $repo
 done
