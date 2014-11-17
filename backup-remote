@@ -8,16 +8,15 @@
 
 SERVER=remote.example.com
 DEST=/var/local/backup/$SERVER	# adjust to your setup
-
-# get the list of repos to pull from
-GITLIST=/tmp/pull_$$
-trap "rm -f $GITLIST" 1 2 3 9 15 ERR EXIT
-scp -q $SERVER:/var/local/backup/git-repos.txt $GITLIST
+REPOLIST=/var/local/backup/git-repos.txt
 
 # pull the repos
 mkdir -p $DEST
 cd $DEST
-sed -e '/^#/d; /^$/d' <$GITLIST | while read -r path repo; do
+
+ssh $SERVER cat $REPOLIST |
+sed -e '/^#/d; /^$/d' |
+while read -r path repo; do
 	if [ ! -d $repo ]; then
 		git init --bare $repo
 		GIT_DIR=$repo git remote add --mirror=fetch origin ssh://$SERVER$path
